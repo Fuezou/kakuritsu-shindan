@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<!-- © 2026 ふえぞう（note: https://note.com/fuezou999）無断転載・改変禁止 -->
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<title>確率 型えらび診断</title>
+<meta name="description" content="解かなくていい。どの型で解くかだけ えらぶ。確率の「どの解き方を使うか」を10問で診断します。">
+<!-- X などに リンクを 貼った ときの カード -->
+<meta property="og:title" content="確率 型えらび診断">
+<meta property="og:description" content="解かなくていい。どの型で解くかだけ えらぶ。10問で診断します。">
+<meta property="og:image" content="https://fuezou.github.io/kakuritsu-shindan/ogp.png">
+<meta property="og:url" content="https://fuezou.github.io/kakuritsu-shindan/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root {
+  --ink: #1d2433; --sub: #5d6676; --line: #e3e6ec; --bg: #f7f8fa; --card: #fff;
+  --accent: #2f5bd3; --ok: #1f8a4c; --ok-bg: #e8f6ee; --ng: #c8402f; --ng-bg: #fcecea;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink); }
+body { font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif; line-height: 1.7; }
+main { max-width: 520px; margin: 0 auto; padding: 20px 16px 32px; }
+[hidden] { display: none !important; }
+h1 { font-size: 26px; line-height: 1.35; margin: 28px 0 6px; letter-spacing: 0.02em; }
+.lead { color: var(--sub); margin: 0 0 22px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin: 0 0 14px; }
+.how { font-size: 14px; color: var(--sub); }
+.how ol { margin: 6px 0 0; padding-left: 1.4em; }
+.types { font-size: 14px; color: var(--sub); margin: 6px 0 0; padding-left: 0; list-style: none; line-height: 1.8; }
+.foot { margin-top: 28px; font-size: 12px; color: var(--sub); text-align: center; }
+.foot a { color: var(--sub); }
+.bar { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--sub); margin-bottom: 8px; }
+.prog { height: 4px; background: var(--line); border-radius: 2px; margin-bottom: 16px; overflow: hidden; }
+.prog i { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+.prob { font-size: 17px; line-height: 1.85; padding: 18px; line-break: strict; }   /* 行の 頭に「。」「、」を 置かない */
+.q { font-weight: bold; margin: 4px 0 10px; }
+.opts { display: grid; gap: 10px; }
+.opt { font: inherit; font-size: 16px; text-align: left; padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
+.opt small { color: var(--sub); }
+.opt:disabled { cursor: default; }
+.opt.ok { border-color: var(--ok); background: var(--ok-bg); }
+.opt.ng { border-color: var(--ng); background: var(--ng-bg); }
+.why { margin-top: 14px; border-left: 4px solid var(--ok); }
+.why.ng { border-left-color: var(--ng); }
+.why p { margin: 0 0 4px; }
+.why .head { font-weight: bold; }
+.why, .misses, .opt, .cta p { word-break: keep-all; overflow-wrap: anywhere; }   /* ことばの 途中で 改行しない（空白で 切る） */
+.btn { display: block; width: 100%; font: inherit; font-weight: bold; font-size: 16px; padding: 13px; border-radius: 10px; border: none; background: var(--accent); color: #fff; cursor: pointer; text-align: center; text-decoration: none; margin-top: 14px; }
+.btn.sub { background: var(--card); color: var(--accent); border: 1.5px solid var(--accent); }
+.btn.x { background: #111; }
+.start { margin-top: 4px; }
+.score { text-align: center; padding: 22px 16px; }
+.score .big { font-size: 44px; font-weight: bold; line-height: 1.2; }
+.score .big small { font-size: 20px; color: var(--sub); }
+.misses { margin: 0; padding-left: 1.2em; }
+.misses li { margin-bottom: 6px; }
+.cta h2 { font-size: 16px; margin: 0 0 6px; }
+.cta p { margin: 0 0 4px; font-size: 15px; }
+.cta .btn.sub { font-size: 15px; font-weight: normal; text-align: left; }
+</style>
+</head>
+<body>
+<main>
+  <section id="titleScreen">
+    <h1>確率<br>型えらび診断</h1>
+    <p class="lead">解かなくていい。<br>どの 型で 解くか だけ えらぶ。</p>
+    <div class="card how">
+      <b>あそびかた</b>
+      <ol>
+        <li>確率の 問題が 1つ 出ます。</li>
+        <li>計算は しないで、「どの 型で 解くか」を 4つから えらびます。</li>
+        <li>10問 終わると、まよいやすい 型が わかります。</li>
+      </ol>
+      <ul class="types" id="typeList"></ul>
+    </div>
+    <button class="btn start" id="startBtn">はじめる（10問）</button>
+    <p class="foot">© 2026 ふえぞう　無断転載・改変禁止<br><a href="https://note.com/fuezou999" target="_blank" rel="noopener">note：ふえぞう@さんすう・すうがくトレーナー</a></p>
+  </section>
+
+  <section id="quizScreen" hidden>
+    <div class="bar"><span>確率 型えらび診断</span><span id="count"></span></div>
+    <div class="prog"><i id="progBar"></i></div>
+    <div class="card prob" id="prob"></div>
+    <p class="q">どの 型で 解く？</p>
+    <div class="opts" id="opts"></div>
+    <div class="card why" id="why" hidden></div>
+    <button class="btn" id="nextBtn" hidden>次へ</button>
+  </section>
+
+  <section id="resultScreen" hidden>
+    <div class="card score">
+      <div>確率 型えらび診断</div>
+      <div class="big" id="resScore"></div>
+      <div id="resMsg"></div>
+    </div>
+    <div class="card" id="missCard"><b>まよった ところ</b><ul class="misses" id="missList"></ul></div>
+    <div class="card cta" id="cta"></div>
+    <a class="btn x" id="shareBtn" target="_blank" rel="noopener">結果を X に 投稿する</a>
+    <button class="btn sub" id="againBtn">もう一度（ちがう 問題）</button>
+    <button class="btn sub" id="topBtn">はじめに もどる</button>
+    <p class="foot">© 2026 ふえぞう　無断転載・改変禁止<br><a href="https://note.com/fuezou999" target="_blank" rel="noopener">note：ふえぞう@さんすう・すうがくトレーナー</a></p>
+  </section>
+</main>
+
+<script id="core">
+// しくみ：型・問題・選択肢・判定・まとめ。型の 名前は 確率ドリル（75問）と おなじ 10の 型
+const KakuritsuCore = (() => {
+  const TYPES = {
+    1: { name: '区別して数える', term: '' },
+    2: { name: '重なりを引く', term: '和事象' },
+    3: { name: '同時に起きないなら足す', term: '排反' },
+    4: { name: '反対から数える', term: '余事象' },
+    5: { name: '続けて起こるなら掛ける', term: '独立' },
+    6: { name: '何回目かを選ぶ', term: '反復試行' },
+    7: { name: '分母をしぼる', term: '条件付き確率' },
+    8: { name: '戻さずに続けて取り出す', term: '乗法定理' },
+    9: { name: '分かった順と時間の順が逆', term: '原因の確率' },
+    10: { name: '平均と同じ式', term: '' },
+  };
+  const label = t => '型' + t + ' ' + TYPES[t].name;
+  // はずれ：まちがえやすい 型。遠回りでも 通る 型は 入れない（数えれば 解ける 問題に「区別して数える」など）
+  const CONFUSE = { 1: [2, 6, 5], 2: [3, 4, 5], 3: [2, 5, 6], 4: [3, 5, 2], 5: [8, 3, 7], 6: [5, 4, 8], 7: [8, 9, 2], 8: [5, 6, 4], 9: [7, 8, 5], 10: [3, 1, 6] };
+  // 遠回り だけど 解ける：× の まま、ひとこと 添える
+  const NOTE = {
+    '4>3': '場合に 分けて 足しても 解けるけど、場合が 多い。「少なくとも」は 反対から が 早い',
+    '4>2': '重なりを 引いても 解けるけど、反対（〜で ない）から 数える ほうが 早い',
+    '3>2': '重なりが ない（同時に 起きない）ので 引く ものが ない。そのまま 足す',
+    '9>7': '条件付き確率 では あるけど、分かった順と 時間の順が 逆。「原因の確率」の 型で 分子・分母を 作る',
+  };
+  const noteFor = (t, c) => NOTE[t + '>' + c] || '';
+  // 問題（各 型 2問）。why：型を 決めた ひとこと
+  const POOL = {
+    1: [
+      { text: '大小2個のサイコロを同時に投げるとき、目の和が7になる確率。', why: '大小は 区別できる。出方は 36通りで どれも 同じくらい 起こりやすい。和が7に なる 組を 数える' },
+      { text: 'A、B、Cの3人がくじで順番を決めて1列に並ぶとき、Aが真ん中になる確率。', why: '並び方は 6通りで どれも 同じくらい 起こりやすい。Aが 真ん中の 並び方を 数える' },
+    ],
+    2: [
+      { text: '1から60までの番号の札が1枚ずつある。1枚引くとき、番号が3の倍数または5の倍数である確率。', why: '「3の倍数」と「5の倍数」は 15の倍数で 重なる。足して、重なりを 引く' },
+      { text: 'ジョーカーを除くトランプ52枚から1枚引くとき、ハートまたは絵札（J・Q・K）である確率。', why: 'ハートの 絵札は 両方に 入って いる。足して、重なりを 引く' },
+    ],
+    3: [
+      { text: '赤玉2個、白玉3個、青玉4個が入った袋から2個を同時に取り出すとき、2個が同じ色である確率。', why: '「2個とも赤」「2個とも白」「2個とも青」は 同時に 起きない。それぞれ 出して 足す' },
+      { text: '大小2個のサイコロを同時に投げるとき、目の和が4の倍数になる確率。', why: '和が 4・8・12 は 同時に 起きない。それぞれ 出して 足す' },
+    ],
+    4: [
+      { text: 'サイコロを4回投げるとき、少なくとも1回は6の目が出る確率。', why: '「少なくとも1回」は 場合が 多い。反対の「1回も 出ない」を 出して 1 から 引く' },
+      { text: '大小2個のサイコロを同時に投げるとき、目の積が3の倍数になる確率。', why: '反対の「どちらも 3の倍数 では ない」の ほうが 数えやすい。1 から 引く' },
+    ],
+    5: [
+      { text: '硬貨1枚とサイコロ1個を同時に投げるとき、硬貨は裏、サイコロは5以上の目が出る確率。', why: '硬貨と サイコロは おたがいに 影響しない。それぞれの 確率を 掛ける' },
+      { text: '当たりが2本入った10本のくじから1本引き、もとに戻してから、もう1本引くとき、2回とも当たる確率。', why: '戻すので 1回目の 結果は 2回目に 影響しない。続けて 掛ける' },
+    ],
+    6: [
+      { text: 'サイコロを4回投げるとき、3の目がちょうど2回出る確率。', why: '同じ ことを 4回 くり返し、そのうち「何回目に」出るかを 選ぶ（C を 使う）' },
+      { text: '硬貨を5回投げるとき、表がちょうど3回出る確率。', why: '同じ ことを 5回 くり返し、表が 出る 3回を 選ぶ（C を 使う）' },
+    ],
+    7: [
+      { text: 'サイコロを1回投げたところ、偶数の目が出た。このとき、その目が4以上である確率。', why: '「偶数だった」は もう 分かって いる。分母を 偶数の 3通りに しぼる' },
+      { text: '大小2個のサイコロを同時に投げたところ、目の和が6だった。このとき、大のサイコロの目が2である確率。', why: '「和が6だった」は もう 分かって いる。分母を 和が6の 5通りに しぼる' },
+    ],
+    8: [
+      { text: '赤玉3個、白玉2個が入った袋から、1個ずつ2回、取り出した玉を戻さずに取り出すとき、1個目が赤玉、2個目が白玉である確率。', why: '戻さないので 2回目は 1回目で 変わる。1回目の あとの 袋で 2回目を 考えて 掛ける' },
+      { text: '当たりが3本入った10本のくじを、Aが1本引き、戻さずに続けてBが1本引くとき、2人ともはずれる確率。', why: '戻さないので Bの ときは 9本の 中から。Aの あとの くじで Bを 考えて 掛ける' },
+    ],
+    9: [
+      { text: '袋Aには赤玉2個と白玉3個、袋Bには赤玉4個と白玉1個が入っている。硬貨を投げて表なら袋A、裏なら袋Bを選び、玉を1個取り出したところ赤玉だった。それが袋Aから取り出された確率。', why: '時間の 順は「袋を 選ぶ → 玉」なのに、分かったのは「玉（赤）」が 先。原因（どちらの 袋か）を 聞いて いる' },
+      { text: 'ある製品の70%を機械X、30%を機械Yが作っている。不良品の割合は、Xが2%、Yが5%である。製品を1個選んだところ不良品だった。それが機械Yで作られた確率。', why: '時間の 順は「機械で 作る → 不良品」なのに、分かったのは「不良品」が 先。原因（どの 機械か）を 聞いて いる' },
+    ],
+    10: [
+      { text: 'サイコロを1回投げて、1の目なら600円、2か3の目なら300円、それ以外なら0円もらえる。もらえる金額の期待値。', why: '（金額）×（その 確率）を 足す。平均と 同じ 式' },
+      { text: '硬貨を3枚同時に投げ、表が出た枚数×100円をもらえる。もらえる金額の期待値。', why: '（金額）×（その 確率）を 足す。平均と 同じ 式' },
+    ],
+  };
+  function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  const shuffle = (rng, xs) => { const a = xs.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  function build(t, k, rng) {
+    const p = POOL[t][k];
+    return { type: t, k, text: p.text, why: p.why, options: shuffle(rng, [t].concat(CONFUSE[t])).map(c => ({ type: c, correct: c === t })) };
+  }
+  // 10の 型から 1問ずつ（2問の どちらか）、順番は まぜる
+  function makeQuiz(rng) { return shuffle(rng, Object.keys(TYPES).map(Number).map(t => build(t, Math.floor(rng() * POOL[t].length), rng))); }
+  function summarize(qs, picks) {
+    const misses = [];
+    qs.forEach((q, i) => { if (picks[i] !== q.type) misses.push({ type: q.type, chosen: picks[i] }); });
+    return { score: qs.length - misses.length, total: qs.length, misses };
+  }
+  return { TYPES, label, CONFUSE, NOTE, noteFor, POOL, build, makeQuiz, summarize, mulberry32 };
+})();
+</script>
+
+<script>
+const C = KakuritsuCore;
+const URLS = {
+  app: 'https://fuezou.github.io/kakuritsu-shindan/',
+  drill: 'https://note.com/fuezou999/n/ndd8e158570fb',
+};
+// まよった 型 → その 型の 無料記事
+const ARTICLE = {
+  1: ['n0d1bb5e42dca', '当たるか、はずれるか。だから2分の1？'],
+  2: ['nb30d2fab429d', '∪と∩、テストのたびに覚え直してませんか'],
+  3: ['nf767f2a91bcf', '排反と独立、どっちがどっちでしたか'],
+  4: ['nd9f1343e64d8', '余事象、いつ使うか決められますか'],
+  5: ['nf767f2a91bcf', '排反と独立、どっちがどっちでしたか'],
+  6: ['nced28f8483ad', '公式のC、意味がわからないまま使っていませんか'],
+  7: ['n085b73220226', '条件付き確率、分母をどれにするか迷っていませんか'],
+  8: ['n9dcaf124c5c2', '条件付き確率か乗法定理か、決められますか'],
+  9: ['na04cb2d44083', '原因の確率、どこが「原因」なのか分からないまま解いていませんか'],
+  10: ['n290c14af63dd', '期待値って、平均と何が違うんですか'],
+};
+const $ = id => document.getElementById(id);
+const optHTML = t => C.label(t) + (C.TYPES[t].term ? ' <small>（' + C.TYPES[t].term + '）</small>' : '');
+const state = { qs: [], i: 0, picks: [], answered: false };
+const rng = C.mulberry32((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0);
+
+function show(id) { ['titleScreen', 'quizScreen', 'resultScreen'].forEach(s => { $(s).hidden = s !== id; }); window.scrollTo(0, 0); }
+function start() {
+  Object.assign(state, { qs: C.makeQuiz(rng), i: 0, picks: [], answered: false });
+  show('quizScreen');
+  render();
+}
+function render() {
+  const q = state.qs[state.i];
+  state.answered = false;
+  $('count').textContent = (state.i + 1) + ' / ' + state.qs.length;
+  $('progBar').style.width = (state.i / state.qs.length * 100) + '%';
+  $('prob').textContent = q.text;
+  $('opts').innerHTML = '';
+  q.options.forEach((o, k) => {
+    const b = document.createElement('button');
+    b.className = 'opt'; b.innerHTML = optHTML(o.type);
+    b.addEventListener('click', () => answer(k));
+    $('opts').appendChild(b);
+  });
+  $('why').hidden = true; $('nextBtn').hidden = true;
+}
+function answer(k) {
+  if (state.answered) return;
+  state.answered = true;
+  const q = state.qs[state.i], o = q.options[k];
+  state.picks.push(o.type);
+  [...$('opts').children].forEach((b, j) => {
+    b.disabled = true;
+    if (q.options[j].correct) b.classList.add('ok');
+    else if (j === k) b.classList.add('ng');
+  });
+  const why = $('why'), note = o.correct ? '' : C.noteFor(q.type, o.type);
+  why.className = 'card why' + (o.correct ? '' : ' ng');
+  why.innerHTML = '<p class="head">' + (o.correct ? '○ 正解' : '× ざんねん。正解は「' + C.label(q.type) + '」') + '</p>' +
+    (note ? '<p>※ ' + note + '</p>' : '') + '<p>' + q.why + '</p>';
+  why.hidden = false;
+  $('nextBtn').textContent = state.i + 1 < state.qs.length ? '次へ' : '結果を 見る';
+  $('nextBtn').hidden = false;
+  $('progBar').style.width = ((state.i + 1) / state.qs.length * 100) + '%';
+}
+function next() {
+  if (!state.answered) return;
+  if (++state.i < state.qs.length) render(); else result();
+}
+function result() {
+  const r = C.summarize(state.qs, state.picks);
+  $('resScore').innerHTML = r.score + '<small> / ' + r.total + '</small>';
+  $('resMsg').textContent = r.score === r.total ? '全問 正解！ 型の 見分けは ばっちり。' : r.score >= 7 ? 'あと 少し。まよった 型を たしかめよう。' : '見分けの 練習が 効く ところです。';
+  $('missCard').hidden = !r.misses.length;
+  $('missList').innerHTML = r.misses.map(x => '<li>「' + C.label(x.type) + '」の 問題で、「' + C.label(x.chosen) + '」を えらんだ</li>').join('');
+  $('cta').innerHTML = ctaHTML(r);
+  const text = '確率 型えらび診断 ' + r.score + '/' + r.total + ' でした';
+  $('shareBtn').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(URLS.app) + '&hashtags=' + encodeURIComponent('確率,高校数学');
+  show('resultScreen');
+}
+// 案内：まよった 型の 無料記事（同じ 記事は 1回）と、型を 選ぶ 練習の ドリル
+function ctaHTML(r) {
+  const seen = [], arts = [];
+  for (const x of r.misses) { const a = ARTICLE[x.type]; if (!seen.includes(a[0])) { seen.push(a[0]); arts.push(a); } }
+  let h = r.misses.length
+    ? '<h2>まよった 型を 読む（無料）</h2>' + arts.map(a => '<a class="btn sub" href="https://note.com/fuezou999/n/' + a[0] + '" target="_blank" rel="noopener">' + a[1] + '</a>').join('') +
+      '<h2 style="margin-top:18px">型を 選ぶ 練習なら</h2>'
+    : '<h2>型の 見分けを 確実に するなら</h2>';
+  return h + '<p>10の 型を 75問で。後編は「問題文を 読んで 型を 選ぶ だけ」の 練習です。</p>' +
+    '<a class="btn" href="' + URLS.drill + '" target="_blank" rel="noopener">確率 型を選ぶ練習75問（note）</a>';
+}
+
+$('typeList').innerHTML = Object.keys(C.TYPES).map(t => '<li>' + C.label(+t) + '</li>').join('');
+$('startBtn').addEventListener('click', start);
+$('nextBtn').addEventListener('click', next);
+$('againBtn').addEventListener('click', start);
+$('topBtn').addEventListener('click', () => show('titleScreen'));
+</script>
+</body>
+</html>
