@@ -6,10 +6,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
 <title>確率 型えらび診断</title>
-<meta name="description" content="解かなくていい。どの型で解くかだけ えらぶ。確率の「どの解き方を使うか」を10問で診断します。">
+<meta name="description" content="解かなくていい。どの式で求めるかだけ えらぶ。確率の「どの解き方を使うか」を10問で診断します。">
 <!-- X などに リンクを 貼った ときの カード -->
 <meta property="og:title" content="確率 型えらび診断">
-<meta property="og:description" content="解かなくていい。どの型で解くかだけ えらぶ。10問で診断します。">
+<meta property="og:description" content="解かなくていい。どの式で求めるかだけ えらぶ。10問で診断します。">
 <meta property="og:image" content="https://fuezou.github.io/kakuritsu-shindan/ogp.png">
 <meta property="og:url" content="https://fuezou.github.io/kakuritsu-shindan/">
 <meta property="og:type" content="website">
@@ -39,7 +39,13 @@ h1 { font-size: 26px; line-height: 1.35; margin: 28px 0 6px; letter-spacing: 0.0
 .q { font-weight: bold; margin: 4px 0 10px; }
 .opts { display: grid; gap: 10px; }
 .opt { font: inherit; font-size: 16px; text-align: left; padding: 12px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); cursor: pointer; }
-.opt small { color: var(--sub); }
+.opt { font-family: 'Times New Roman', 'Hiragino Mincho ProN', serif; font-size: 19px; }
+sup { font-size: 0.68em; line-height: 0; }
+.frac { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 2px; }
+.frac > span:first-child { border-bottom: 1px solid currentColor; padding: 0 3px; }
+.frac > span:last-child { padding: 0 3px; }
+.frac .frac { font-size: 0.85em; }
+.big { font-size: 2em; line-height: 1; vertical-align: middle; font-weight: 200; }
 .opt:disabled { cursor: default; }
 .opt.ok { border-color: var(--ok); background: var(--ok-bg); }
 .opt.ng { border-color: var(--ng); background: var(--ng-bg); }
@@ -66,14 +72,15 @@ h1 { font-size: 26px; line-height: 1.35; margin: 28px 0 6px; letter-spacing: 0.0
 <main>
   <section id="titleScreen">
     <h1>確率<br>型えらび診断</h1>
-    <p class="lead">解かなくていい。<br>どの 型で 解くか だけ えらぶ。</p>
+    <p class="lead">解かなくていい。<br>どの 式で 求めるか だけ えらぶ。</p>
     <div class="card how">
       <b>あそびかた</b>
       <ol>
         <li>確率の 問題が 1つ 出ます。</li>
-        <li>計算は しないで、「どの 型で 解くか」を 4つから えらびます。</li>
+        <li>計算は しないで、正しい 式を 4つから えらびます。</li>
         <li>10問 終わると、まよいやすい 型が わかります。</li>
       </ol>
+      <p style="margin:8px 0 0">出る 型（ドリルと おなじ 10の 型）</p>
       <ul class="types" id="typeList"></ul>
     </div>
     <button class="btn start" id="startBtn">はじめる（10問）</button>
@@ -84,7 +91,7 @@ h1 { font-size: 26px; line-height: 1.35; margin: 28px 0 6px; letter-spacing: 0.0
     <div class="bar"><span>確率 型えらび診断</span><span id="count"></span></div>
     <div class="prog"><i id="progBar"></i></div>
     <div class="card prob" id="prob"></div>
-    <p class="q">どの 型で 解く？</p>
+    <p class="q">どの 式で 求める？</p>
     <div class="opts" id="opts"></div>
     <div class="card why" id="why" hidden></div>
     <button class="btn" id="nextBtn" hidden>次へ</button>
@@ -96,7 +103,7 @@ h1 { font-size: 26px; line-height: 1.35; margin: 28px 0 6px; letter-spacing: 0.0
       <div class="big" id="resScore"></div>
       <div id="resMsg"></div>
     </div>
-    <div class="card" id="missCard"><b>まよった ところ</b><ul class="misses" id="missList"></ul></div>
+    <div class="card" id="missCard"><b>まちがえた 問題の 型</b><ul class="misses" id="missList"></ul></div>
     <div class="card cta" id="cta"></div>
     <a class="btn x" id="shareBtn" target="_blank" rel="noopener">結果を X に 投稿する</a>
     <button class="btn sub" id="againBtn">もう一度（ちがう 問題）</button>
@@ -106,7 +113,8 @@ h1 { font-size: 26px; line-height: 1.35; margin: 28px 0 6px; letter-spacing: 0.0
 </main>
 
 <script id="core">
-// しくみ：型・問題・選択肢・判定・まとめ。型の 名前は 確率ドリル（75問）と おなじ 10の 型
+// しくみ：型・問題・式の 選択肢・まとめ。型の 名前は 確率ドリル（75問）と おなじ 10の 型
+// 選択肢は その 問題の 数を 入れた 式（\frac{a}{b}・^{k}・₉C₂ の 書き方）。先頭が 正しい 式、のこり 3つは 計算すると ちがう 値に なる 式
 const KakuritsuCore = (() => {
   const TYPES = {
     1: { name: '区別して数える', term: '' },
@@ -121,73 +129,84 @@ const KakuritsuCore = (() => {
     10: { name: '平均と同じ式', term: '期待値' },   // 「平均」だけで 金額を そのまま 平均する かんちがいを ふせぐ
   };
   const label = t => '型' + t + ' ' + TYPES[t].name;
-  // はずれ：まちがえやすい 型。遠回りでも 通る 型は 入れない（数えれば 解ける 問題に「区別して数える」など）
-  const CONFUSE = { 1: [2, 6, 5], 2: [3, 4, 5], 3: [2, 5, 6], 4: [3, 5, 2], 5: [8, 3, 7], 6: [5, 4, 8], 7: [8, 9, 2], 8: [5, 6, 4], 9: [7, 8, 5], 10: [3, 1, 6] };
-  // 遠回り だけど 解ける：× の まま、ひとこと 添える
-  const NOTE = {
-    '4>3': '場合に 分けて 足しても 解けるけど、場合が 多い。「少なくとも」は 反対から が 早い',
-    '4>2': '重なりを 引いても 解けるけど、反対（〜で ない）から 数える ほうが 早い',
-    '3>2': '重なりが ない（同時に 起きない）ので 引く ものが ない。そのまま 足す',
-    '9>7': '条件付き確率 では あるけど、分かった順と 時間の順が 逆。「原因の確率」の 型で 分子・分母を 作る',
-  };
-  const noteFor = (t, c) => NOTE[t + '>' + c] || '';
-  // 問題（各 型 2問）。why：型を 決めた ひとこと
+  const f = (a, b) => '\\frac{' + a + '}{' + b + '}';
+  const KITAI = '期待値は（金額）×（確率）の 和。度数分布の 平均（値 × 割合 の 和）と 同じ 形の 式で、まだ 起きて いないので 割合の かわりに 確率を 使う。';
   const POOL = {
     1: [
-      { text: '同じ硬貨2枚を同時に投げるとき、表と裏が1枚ずつ出る確率。', why: '見た目が 同じでも 2枚を 区別する。出方は 4通りで どれも 同じくらい 起こりやすい。 （表, 裏）と （裏, 表）の 2通り。 「表表・表裏・裏裏 の 3通り」では ない' },
-      { text: '同じ大きさのサイコロ2個を同時に投げるとき、1の目と2の目が1つずつ出る確率。', why: '見た目が 同じでも 2個を 区別する。出方は 36通りで どれも 同じくらい 起こりやすい。 （1, 2）と （2, 1）の 2通り' },
+      { text: '同じ硬貨2枚を同時に投げるとき、表と裏が1枚ずつ出る確率。', opts: [f(2, 4), f(1, 3), f(1, 2) + ' × ' + f(1, 2), '1 − ' + f(1, 2) + ' × ' + f(1, 2)],
+        why: '見た目が 同じでも 2枚を 区別する。出方は 4通りで どれも 同じくらい 起こりやすい。 （表, 裏）と （裏, 表）の 2通り。 「表表・表裏・裏裏 の 3通り」では ない' },
+      { text: '同じ大きさのサイコロ2個を同時に投げるとき、1の目と2の目が1つずつ出る確率。', opts: [f(2, 36), f(1, 36), f(1, 21), f(1, 6) + ' ＋ ' + f(1, 6)],
+        why: '見た目が 同じでも 2個を 区別する。出方は 36通りで どれも 同じくらい 起こりやすい。 （1, 2）と （2, 1）の 2通り' },
     ],
     2: [
-      { text: '1から60までの番号の札が1枚ずつある。1枚引くとき、番号が3の倍数または5の倍数である確率。', why: '「3の倍数」と「5の倍数」は 15の倍数で 重なる。足して、重なりを 引く' },
-      { text: 'ジョーカーを除くトランプ52枚から1枚引くとき、ハートまたは絵札（J・Q・K）である確率。', why: 'ハートの 絵札は 両方に 入って いる。足して、重なりを 引く' },
+      { text: '1から60までの番号の札が1枚ずつある。1枚引くとき、番号が3の倍数または5の倍数である確率。', opts: [f(20, 60) + ' ＋ ' + f(12, 60) + ' − ' + f(4, 60), f(20, 60) + ' ＋ ' + f(12, 60), f(20, 60) + ' × ' + f(12, 60), f(4, 60)],
+        why: '3の倍数（20枚）と 5の倍数（12枚）は、15の倍数（4枚）で 重なる。足して、重なりを 引く' },
+      { text: 'ジョーカーを除くトランプ52枚から1枚引くとき、ハートまたは絵札（J・Q・K）である確率。', opts: [f(13, 52) + ' ＋ ' + f(12, 52) + ' − ' + f(3, 52), f(13, 52) + ' ＋ ' + f(12, 52), f(13, 52) + ' × ' + f(12, 52), f(3, 52)],
+        why: 'ハート（13枚）と 絵札（12枚）は、ハートの 絵札（3枚）で 重なる。足して、重なりを 引く' },
     ],
     3: [
-      { text: '赤玉2個、白玉3個、青玉4個が入った袋から2個を同時に取り出すとき、2個が同じ色である確率。', why: '「2個とも赤」「2個とも白」「2個とも青」は 同時に 起きない。それぞれ 出して 足す' },
-      { text: '大小2個のサイコロを同時に投げるとき、目の和が4の倍数になる確率。', why: '和が 4・8・12 は 同時に 起きない。それぞれ 出して 足す' },
+      { text: '赤玉2個、白玉3個、青玉4個が入った袋から2個を同時に取り出すとき、2個が同じ色である確率。', opts: [f('₂C₂', '₉C₂') + ' ＋ ' + f('₃C₂', '₉C₂') + ' ＋ ' + f('₄C₂', '₉C₂'), f('₂C₂', '₉C₂') + ' × ' + f('₃C₂', '₉C₂') + ' × ' + f('₄C₂', '₉C₂'), '(' + f(2, 9) + ')^{2} ＋ (' + f(3, 9) + ')^{2} ＋ (' + f(4, 9) + ')^{2}', f(1, 3)],
+        why: '「2個とも 赤」「2個とも 白」「2個とも 青」は 同時に 起きない。それぞれの 確率を 足す' },
+      { text: '大小2個のサイコロを同時に投げるとき、目の和が4の倍数になる確率。', opts: [f(3, 36) + ' ＋ ' + f(5, 36) + ' ＋ ' + f(1, 36), f(3, 36) + ' × ' + f(5, 36) + ' × ' + f(1, 36), f(3, 36), f(3, 11)],
+        why: '和が 4（3通り）・8（5通り）・12（1通り）は 同時に 起きない。足す' },
     ],
     4: [
-      { text: 'サイコロを4回投げるとき、少なくとも1回は6の目が出る確率。', why: '「少なくとも1回」は 場合が 多い。反対の「1回も 出ない」を 出して 1 から 引く' },
-      { text: '大小2個のサイコロを同時に投げるとき、目の積が3の倍数になる確率。', why: '反対の「どちらも 3の倍数 では ない」の ほうが 数えやすい。1 から 引く' },
+      { text: 'サイコロを4回投げるとき、少なくとも1回は6の目が出る確率。', opts: ['1 − (' + f(5, 6) + ')^{4}', f(1, 6) + ' × 4', '(' + f(1, 6) + ')^{4}', '1 − (' + f(1, 6) + ')^{4}'],
+        why: '「少なくとも 1回」の 反対は「4回とも 6 以外」。それを 出して 1 から 引く' },
+      { text: '3個のサイコロを同時に投げるとき、目の積が偶数になる確率。', opts: ['1 − (' + f(1, 2) + ')^{3}', '(' + f(1, 2) + ')^{3}', f(1, 2), '3 × (' + f(1, 2) + ')^{3}'],
+        why: '積が 偶数 ＝ 少なくとも 1個は 偶数。反対の「3個とも 奇数」を 出して 1 から 引く' },
     ],
     5: [
-      { text: '硬貨1枚とサイコロ1個を同時に投げるとき、硬貨は裏、サイコロは5以上の目が出る確率。', why: '硬貨と サイコロは おたがいに 影響しない。それぞれの 確率を 掛ける' },
-      { text: '当たりが2本入った10本のくじから1本引き、もとに戻してから、もう1本引くとき、2回とも当たる確率。', why: '戻すので 1回目の 結果は 2回目に 影響しない。続けて 掛ける' },
+      { text: '硬貨1枚とサイコロ1個を同時に投げるとき、硬貨は裏、サイコロは5以上の目が出る確率。', opts: [f(1, 2) + ' × ' + f(2, 6), f(1, 2) + ' ＋ ' + f(2, 6), f(1, 12), f(2, 6)],
+        why: '硬貨と サイコロは おたがいに 影響しない。それぞれの 確率を 掛ける' },
+      { text: '当たりが2本入った10本のくじから1本引き、もとに戻してから、もう1本引くとき、2回とも当たる確率。', opts: [f(2, 10) + ' × ' + f(2, 10), f(2, 10) + ' × ' + f(1, 9), f(2, 10) + ' ＋ ' + f(2, 10), f('₂C₂', '₁₀C₂')],
+        why: '戻すので 2回目も 10本の 中から。1回目の 結果は 2回目に 影響しない。続けて 掛ける' },
     ],
     6: [
-      { text: 'サイコロを4回投げるとき、3の目がちょうど2回出る確率。', why: '同じ ことを 4回 くり返し、そのうち「何回目に」出るかを 選ぶ（C を 使う）' },
-      { text: '硬貨を5回投げるとき、表がちょうど3回出る確率。', why: '同じ ことを 5回 くり返し、表が 出る 3回を 選ぶ（C を 使う）' },
+      { text: 'サイコロを4回投げるとき、3の目がちょうど2回出る確率。', opts: ['₄C₂ (' + f(1, 6) + ')^{2} (' + f(5, 6) + ')^{2}', '(' + f(1, 6) + ')^{2} (' + f(5, 6) + ')^{2}', '(' + f(1, 6) + ')^{2}', '₄C₂ (' + f(1, 6) + ')^{2}'],
+        why: '4回の うち 3の目が 出る 2回を 選ぶ（₄C₂ 通り）。C を わすれない' },
+      { text: '硬貨を5回投げるとき、表がちょうど3回出る確率。', opts: ['₅C₃ (' + f(1, 2) + ')^{3} (' + f(1, 2) + ')^{2}', '(' + f(1, 2) + ')^{3} (' + f(1, 2) + ')^{2}', '₅C₃ (' + f(1, 2) + ')^{3}', f(3, 5)],
+        why: '5回の うち 表が 出る 3回を 選ぶ（₅C₃ 通り）。C を わすれない' },
     ],
     7: [
-      { text: 'サイコロを1回投げたところ、偶数の目が出た。このとき、その目が4以上である確率。', why: '「偶数だった」は もう 分かって いる。分母を 偶数の 3通りに しぼる' },
-      { text: '大小2個のサイコロを同時に投げたところ、目の和が6だった。このとき、大のサイコロの目が2である確率。', why: '「和が6だった」は もう 分かって いる。分母を 和が6の 5通りに しぼる' },
+      { text: 'サイコロを1回投げたところ、偶数の目が出た。このとき、その目が4以上である確率。', opts: [f(2, 3), f(2, 6), f(3, 6), f(1, 2) + ' × ' + f(3, 6)],
+        why: '「偶数だった」は もう 分かって いる。分母を 偶数の 3通り（2, 4, 6）に しぼる' },
+      { text: '大小2個のサイコロを同時に投げたところ、目の和が6だった。このとき、大のサイコロの目が2である確率。', opts: [f(1, 5), f(1, 36), f(1, 6), f(5, 36) + ' × ' + f(1, 6)],
+        why: '「和が6だった」は もう 分かって いる。分母を 和が6の 5通りに しぼる' },
     ],
     8: [
-      { text: '赤玉3個、白玉2個が入った袋から、1個ずつ2回、取り出した玉を戻さずに取り出すとき、1個目が赤玉、2個目が白玉である確率。', why: '戻さないので 2回目は 1回目で 変わる。1回目の あとの 袋で 2回目を 考えて 掛ける' },
-      { text: '当たりが3本入った10本のくじを、Aが1本引き、戻さずに続けてBが1本引くとき、2人ともはずれる確率。', why: '戻さないので Bの ときは 9本の 中から。Aの あとの くじで Bを 考えて 掛ける' },
+      { text: '赤玉3個、白玉2個が入った袋から、1個ずつ2回、取り出した玉を戻さずに取り出すとき、1個目が赤玉、2個目が白玉である確率。', opts: [f(3, 5) + ' × ' + f(2, 4), f(3, 5) + ' × ' + f(2, 5), f(3, 5) + ' ＋ ' + f(2, 4), f('₃C₁ × ₂C₁', '₅C₂')],
+        why: '戻さないので 2回目は 4個の 中から（白は 2個）。分母も 分子も 1つずつ 減る' },
+      { text: '当たりが3本入った10本のくじを、Aが1本引き、戻さずに続けてBが1本引くとき、2人ともはずれる確率。', opts: [f(7, 10) + ' × ' + f(6, 9), f(7, 10) + ' × ' + f(7, 10), '1 − ' + f(3, 10) + ' × ' + f(2, 9), f(7, 10) + ' ＋ ' + f(6, 9)],
+        why: '戻さないので Bの ときは 9本の 中から（はずれは 6本）。分母も 分子も 1つずつ 減る' },
     ],
     9: [
-      { text: '袋Aには赤玉2個と白玉3個、袋Bには赤玉4個と白玉1個が入っている。硬貨を投げて表なら袋A、裏なら袋Bを選び、玉を1個取り出したところ赤玉だった。それが袋Aから取り出された確率。', why: '時間の 順は「袋を 選ぶ → 玉」なのに、分かったのは「玉（赤）」が 先。原因（どちらの 袋か）を 聞いて いる' },
-      { text: 'ある製品の70%を機械X、30%を機械Yが作っている。不良品の割合は、Xが2%、Yが5%である。製品を1個選んだところ不良品だった。それが機械Yで作られた確率。', why: '時間の 順は「機械で 作る → 不良品」なのに、分かったのは「不良品」が 先。原因（どの 機械か）を 聞いて いる' },
+      { text: '袋Aには赤玉2個と白玉3個、袋Bには赤玉4個と白玉1個が入っている。硬貨を投げて表なら袋A、裏なら袋Bを選び、玉を1個取り出したところ赤玉だった。それが袋Aから取り出された確率。', opts: [f(f(1, 2) + ' × ' + f(2, 5), f(1, 2) + ' × ' + f(2, 5) + ' ＋ ' + f(1, 2) + ' × ' + f(4, 5)), f(1, 2) + ' × ' + f(2, 5), f(2, 5), f(1, 2)],
+        why: '時間の 順は「袋を 選ぶ → 玉」、分かったのは「赤」が 先。赤が 出る 確率 全体を 分母に、袋Aで 赤の 確率を 分子に する' },
+      { text: 'ある製品の70%を機械X、30%を機械Yが作っている。不良品の割合は、Xが2%、Yが5%である。製品を1個選んだところ不良品だった。それが機械Yで作られた確率。', opts: [f('0.3 × 0.05', '0.7 × 0.02 ＋ 0.3 × 0.05'), '0.3 × 0.05', '0.05', '0.3'],
+        why: '時間の 順は「機械で 作る → 不良品」、分かったのは「不良品」が 先。不良品の 確率 全体を 分母に、Yで 不良品の 確率を 分子に する' },
     ],
     10: [
-      { text: 'サイコロを1回投げて、1の目なら600円、2か3の目なら300円、それ以外なら0円もらえる。もらえる金額の期待値。', why: '（金額）×（その 確率）を 足す。平均と 同じ 式' },
-      { text: '硬貨を3枚同時に投げ、表が出た枚数×100円をもらえる。もらえる金額の期待値。', why: '（金額）×（その 確率）を 足す。平均と 同じ 式' },
+      { text: 'サイコロを1回投げて、1の目なら600円、2か3の目なら300円、それ以外なら0円もらえる。もらえる金額の期待値。', opts: ['600 × ' + f(1, 6) + ' ＋ 300 × ' + f(2, 6) + ' ＋ 0 × ' + f(3, 6), '(600 ＋ 300 ＋ 0) ÷ 3', '600 × ' + f(1, 6) + ' ＋ 300 × ' + f(1, 6), '(600 ＋ 300) ÷ 2'],
+        why: KITAI + '金額を そのまま ÷3 は しない' },
+      { text: 'かたよりのないサイコロを60回投げたら、1の目が12回、2か3の目が18回出た。1の目なら600円、2か3の目なら300円、それ以外なら0円もらえるとき、次に1回投げてもらえる金額の期待値。', opts: ['600 × ' + f(1, 6) + ' ＋ 300 × ' + f(2, 6) + ' ＋ 0 × ' + f(3, 6), '600 × ' + f(12, 60) + ' ＋ 300 × ' + f(18, 60) + ' ＋ 0 × ' + f(30, 60), '(600 ＋ 300 ＋ 0) ÷ 3', '600 × ' + f(1, 6) + ' ＋ 300 × ' + f(1, 6)],
+        why: KITAI + '「次に 1回」は まだ 起きて いない ので、60回の 結果の 割合（12/60 など）では なく 確率を 使う。結果の 割合で 出すのは「これまでの 平均」' },
     ],
   };
   function mulberry32(a) { return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
   const shuffle = (rng, xs) => { const a = xs.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   function build(t, k, rng) {
     const p = POOL[t][k];
-    return { type: t, k, text: p.text, why: p.why, options: shuffle(rng, [t].concat(CONFUSE[t])).map(c => ({ type: c, correct: c === t })) };
+    return { type: t, k, text: p.text, why: p.why, options: shuffle(rng, p.opts.map((x, i) => ({ expr: x, correct: i === 0 }))) };
   }
   // 10の 型から 1問ずつ（2問の どちらか）、順番は まぜる
   function makeQuiz(rng) { return shuffle(rng, Object.keys(TYPES).map(Number).map(t => build(t, Math.floor(rng() * POOL[t].length), rng))); }
+  // picks：えらんだ 選択肢が 正しかったか（true / false）
   function summarize(qs, picks) {
-    const misses = [];
-    qs.forEach((q, i) => { if (picks[i] !== q.type) misses.push({ type: q.type, chosen: picks[i] }); });
+    const misses = qs.filter((q, i) => !picks[i]).map(q => ({ type: q.type, k: q.k }));
     return { score: qs.length - misses.length, total: qs.length, misses };
   }
-  return { TYPES, label, CONFUSE, NOTE, noteFor, POOL, build, makeQuiz, summarize, mulberry32 };
+  return { TYPES, label, POOL, build, makeQuiz, summarize, mulberry32 };
 })();
 </script>
 
@@ -211,7 +230,16 @@ const ARTICLE = {
   10: ['n290c14af63dd', '期待値って、平均と何が違うんですか'],
 };
 const $ = id => document.getElementById(id);
-const optHTML = t => C.label(t) + (C.TYPES[t].term ? ' <small>（' + C.TYPES[t].term + '）</small>' : '');
+const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// 「\frac{a}{b}」「^{k}」を HTML に（分数の 中の 分数も）
+function tex(t) {
+  let h = esc(t);
+  for (let i = 0; i < 3 && h.includes('\\frac{'); i++) h = h.replace(/\\frac\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g, '<span class="frac"><span>$1</span><span>$2</span></span>');
+  // 分数を 包む かっこは 分数の 高さに 合わせて 大きく
+  h = h.replace(/\((<span class="frac"><span>[^<]*<\/span><span>[^<]*<\/span><\/span>)\)/g, '<span class="big">(</span>$1<span class="big">)</span>');
+  return h.replace(/\^\{([^}]*)\}/g, '<sup>$1</sup>');
+}
+const typeHTML = t => C.label(t) + (C.TYPES[t].term ? '（' + C.TYPES[t].term + '）' : '');
 const state = { qs: [], i: 0, picks: [], answered: false };
 const rng = C.mulberry32((Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0);
 
@@ -230,7 +258,7 @@ function render() {
   $('opts').innerHTML = '';
   q.options.forEach((o, k) => {
     const b = document.createElement('button');
-    b.className = 'opt'; b.innerHTML = optHTML(o.type);
+    b.className = 'opt'; b.innerHTML = tex(o.expr);
     b.addEventListener('click', () => answer(k));
     $('opts').appendChild(b);
   });
@@ -240,16 +268,16 @@ function answer(k) {
   if (state.answered) return;
   state.answered = true;
   const q = state.qs[state.i], o = q.options[k];
-  state.picks.push(o.type);
+  state.picks.push(o.correct);
   [...$('opts').children].forEach((b, j) => {
     b.disabled = true;
     if (q.options[j].correct) b.classList.add('ok');
     else if (j === k) b.classList.add('ng');
   });
-  const why = $('why'), note = o.correct ? '' : C.noteFor(q.type, o.type);
+  const why = $('why');
   why.className = 'card why' + (o.correct ? '' : ' ng');
-  why.innerHTML = '<p class="head">' + (o.correct ? '○ 正解' : '× ざんねん。正解は「' + C.label(q.type) + '」') + '</p>' +
-    (note ? '<p>※ ' + note + '</p>' : '') + '<p>' + q.why.replace(/, /g, ',\u00a0') + '</p>';   // （1, 2）は かっこの 途中で 改行しない
+  why.innerHTML = '<p class="head">' + (o.correct ? '○ 正解' : '× ざんねん。正しい 式は 緑の もの') + '</p>' +
+    '<p>この 問題は「' + typeHTML(q.type) + '」</p><p>' + q.why.replace(/, /g, ', ') + '</p>';   // （1, 2）は かっこの 途中で 改行しない
   why.hidden = false;
   $('nextBtn').textContent = state.i + 1 < state.qs.length ? '次へ' : '結果を 見る';
   $('nextBtn').hidden = false;
@@ -264,7 +292,7 @@ function result() {
   $('resScore').innerHTML = r.score + '<small> / ' + r.total + '</small>';
   $('resMsg').textContent = r.score === r.total ? '全問 正解！ 型の 見分けは ばっちり。' : r.score >= 7 ? 'あと 少し。まよった 型を たしかめよう。' : '見分けの 練習が 効く ところです。';
   $('missCard').hidden = !r.misses.length;
-  $('missList').innerHTML = r.misses.map(x => '<li>「' + C.label(x.type) + '」の 問題で、「' + C.label(x.chosen) + '」を えらんだ</li>').join('');
+  $('missList').innerHTML = r.misses.map(x => '<li>' + typeHTML(x.type) + '</li>').join('');
   $('cta').innerHTML = ctaHTML(r);
   const text = '確率 型えらび診断 ' + r.score + '/' + r.total + ' でした';
   $('shareBtn').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(URLS.app) + '&hashtags=' + encodeURIComponent('確率,高校数学');
